@@ -3,65 +3,44 @@ import streamlit as st
 import requests
 from PIL import Image
 
+# Backend URL (your deployed orchestrator)
 BACKEND_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app"
 
-# -----------------------------
-# Page Setup
-# -----------------------------
 st.set_page_config(page_title="🛡️ ML Gatekeeper Demo", layout="wide")
 
-st.markdown(
-    """
-    <style>
-    .main {background-color: #f9f9f9;}
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.title("🛡️ ML Gatekeeper")
-st.subheader("AI Multi-Agent Pipeline Validator")
-st.write("**Agents:** Extractor → Validator → Reviewer → Decision")
+st.title("🛡️ ML Gatekeeper - Multi-Agent Pipeline Validator")
+st.write("Analyze ML pipelines using Extractor → Validator → Reviewer → Decision")
 
 # -----------------------------
-# Input Section
+# Text Input
 # -----------------------------
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("### 📄 Paste ML Pipeline Code")
-    default_code = """from sklearn.pipeline import Pipeline
+default_code = """from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
+    ('pca', PCA(n_components=2)),
     ('model', LogisticRegression())
 ])
 """
-    code = st.text_area("Pipeline Code:", value=default_code, height=200)
-
-with col2:
-    st.markdown("### 🖼️ Upload Pipeline Diagram")
-    uploaded_img = st.file_uploader("Upload an image", type=["png","jpg","jpeg"])
-    if uploaded_img:
-        image = Image.open(uploaded_img)
-        st.image(image, caption="Uploaded Pipeline Diagram", use_column_width=True)
+code = st.text_area("Paste or edit your ML pipeline code:", value=default_code, height=200)
 
 # -----------------------------
-# Action Buttons
+# Image Input
 # -----------------------------
-st.markdown("---")
+uploaded_img = st.file_uploader("Upload a pipeline diagram (image)", type=["png","jpg","jpeg"])
+if uploaded_img:
+    image = Image.open(uploaded_img)
+    st.image(image, caption="Uploaded Pipeline Diagram", use_column_width=True)
+
+# -----------------------------
+# Analyze Button
+# -----------------------------
 if st.button("🚀 Analyze Pipeline"):
     if code.strip():
-        payload = {"pipeline": code}
+        payload = {"pipeline": code}  # ✅ correct field name
         resp = requests.post(f"{BACKEND_URL}/analyze_pipeline", json=payload)
 
         if resp.status_code == 200:
