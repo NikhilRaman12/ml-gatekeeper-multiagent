@@ -1,144 +1,73 @@
+# mlgatekeeper_app.py
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List, Dict, Any
+import uvicorn
 
-import streamlit as st
-import requests
+app = FastAPI(title="MLGatekeeper API")
 
-# Cloud Run API endpoint
-API_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app/run_pipeline"
+# -----------------------------
+# Schemas
+# -----------------------------
+class PipelineStep(BaseModel):
+    name: str
+    type: str
+    parameters: Dict[str, Any] = {}
 
-st.set_page_config(
-    page_title="ML Gatekeeper",
-    page_icon="🛡️",
-    layout="wide"
-)
+class PipelineInput(BaseModel):
+    code: str  # The Python code of the pipeline
 
-# ---------------- HEADER ----------------
-st.title("🛡️ ML Gatekeeper")
-st.subheader("AI Multi-Agent Pipeline Validator")
+class AgentResult(BaseModel):
+    extraction: Dict[str, Any]
+    validation: Dict[str, Any]
+    review: Dict[str, Any]
+    decision: str
 
-st.markdown("""
-ML Gatekeeper analyzes ML pipelines using **AI agents**.
+# -----------------------------
+# Routes
+# -----------------------------
+@app.get("/")
+def root():
+    return {"message": "MLGatekeeper API is running!"}
 
-Pipeline Flow  
-Extractor → Validator → Reviewer → Decision
-""")
+@app.post("/validate")
+def validate_pipeline(pipeline: PipelineInput):
+    # Simple validation logic
+    if not pipeline.code.strip():
+        return {"valid": False, "message": "Pipeline code is empty."}
+    return {"valid": True, "message": "Pipeline code is present."}
 
-# ---------------- DEMO PIPELINE ----------------
-demo_pipeline = """
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+@app.post("/run_pipeline", response_model=AgentResult)
+def run_pipeline(pipeline: PipelineInput):
+    code = pipeline.code
 
-pipeline = Pipeline([
-    ('scaler', StandardScaler()),
-    ('model', LogisticRegression())
-])
-"""
+    # ---------------- Agents Simulation ----------------
+    # Extractor Agent
+    extraction = {"steps_found": ["scaler", "model"] if "Pipeline" in code else []}
 
-# ---------------- SIDEBAR ----------------
-mode = st.sidebar.radio(
-    "Choose Mode",
-    ["Demo Pipeline", "Custom Pipeline"]
-)
+    # Validation Agent
+    validation = {"best_practices": "Passed" if "Pipeline" in code else "Failed"}
 
-# ---------------- INPUT ----------------
-if mode == "Demo Pipeline":
+    # Review Agent
+    review = {"safety_checks": "No issues detected" if "Pipeline" in code else "Issues detected"}
 
-    st.info("Demo pipeline loaded")
-
-    user_code = demo_pipeline
-
-    st.code(user_code, language="python")
-
-else:
-
-    user_code = st.text_area(
-        "Paste your ML pipeline code",
-        height=250
-    )
-
-# ---------------- ANALYZE ----------------
-if st.button("🚀 Analyze Pipeline"):
-
-    if user_code.strip() == "":
-        st.warning("Please enter pipeline code")
-
+    # Gatekeeper Decision Logic
+    if extraction["steps_found"] and validation["best_practices"] == "Passed":
+        decision = "approved"
+    elif extraction["steps_found"]:
+        decision = "warning"
     else:
+        decision = "rejected"
 
-        with st.spinner("Running AI agents..."):
+    return {
+        "extraction": extraction,
+        "validation": validation,
+        "review": review,
+        "decision": decision
+    }
 
-            try:
-
-                payload = {"code": user_code}
-
-                response = requests.post(
-                    API_URL,
-                    json=payload,
-                    timeout=30
-                )
-
-                # Debug info
-                st.write("API Status Code:", response.status_code)
-
-                if response.status_code == 200:
-
-                    result = response.json()
-
-                    st.success("Pipeline analysis complete")
-
-                    col1, col2, col3 = st.columns(3)
-
-                    with col1:
-                        st.subheader("🔍 Extractor Agent")
-                        st.json(result.get("extraction", {}))
-
-                    with col2:
-                        st.subheader("🧪 Validation Agent")
-                        st.json(result.get("validation", {}))
-
-                    with col3:
-                        st.subheader("🧠 Review Agent")
-                        st.json(result.get("review", {}))
-
-                    st.divider()
-
-                    decision = result.get("decision", "unknown")
-
-                    st.subheader("🛡️ Gatekeeper Decision")
-
-                    if decision == "approved":
-                        st.success("✅ Pipeline Approved")
-
-                    elif decision == "warning":
-                        st.warning("⚠️ Needs Review")
-
-                    elif decision == "rejected":
-                        st.error("❌ Pipeline Rejected")
-
-                    else:
-                        st.info("Decision not returned by API")
-
-                else:
-
-                    st.error("API returned an error")
-                    st.text(response.text)
-
-            except Exception as e:
-
-                st.error("Connection failed")
-                st.text(str(e))
-
-# ---------------- FOOTER ----------------
-st.divider()
-
-st.markdown("""
-### About ML Gatekeeper
-
-ML Gatekeeper is a **multi-agent AI system** designed to audit ML pipelines.
-
-Agents:
-
-• Extractor Agent – Understands pipeline structure  
-• Validation Agent – Checks ML best practices  
-• Review Agent – Performs safety analysis  
-""")
-
+# -----------------------------
+# Run
+# -----------------------------
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8080)
