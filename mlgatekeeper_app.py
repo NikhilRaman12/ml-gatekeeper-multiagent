@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 
 # Cloud Run API endpoint
-API_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app/analyze_pipeline"
+API_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app/run_pipeline"
 
 st.set_page_config(
     page_title="ML Gatekeeper",
