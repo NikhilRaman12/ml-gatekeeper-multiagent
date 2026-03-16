@@ -1,9 +1,8 @@
 ```python
 import streamlit as st
 import requests
-import json
 
-# Cloud Run Orchestrator API
+# Cloud Run API
 API_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app/analyze_pipeline"
 
 st.set_page_config(
@@ -12,52 +11,21 @@ st.set_page_config(
     layout="wide"
 )
 
-# -----------------------------
-# Custom CSS
-# -----------------------------
-st.markdown("""
-<style>
-.main {
-    background-color: #0f172a;
-}
-h1 {
-    color: #38bdf8;
-}
-.stButton>button {
-    background-color: #38bdf8;
-    color: black;
-    font-weight: bold;
-    border-radius: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -----------------------------
-# Header
-# -----------------------------
+# --------- HEADER ---------
 st.title("🛡️ ML Gatekeeper")
 st.subheader("AI Multi-Agent Pipeline Validator")
 
-st.markdown("""
-ML Gatekeeper analyzes machine learning pipelines using **autonomous AI agents**.
+st.markdown(
+"""
+ML Gatekeeper analyzes machine learning pipelines using **multiple AI agents**.
 
-### Pipeline Flow
+**Pipeline Flow**
+
 Extractor Agent → Validation Agent → Review Agent → Final Decision
-""")
-
-# -----------------------------
-# Sidebar
-# -----------------------------
-st.sidebar.title("⚙️ Controls")
-
-mode = st.sidebar.radio(
-    "Choose Mode",
-    ["Custom Pipeline", "Demo Pipeline"]
+"""
 )
 
-# -----------------------------
-# Sample Pipeline
-# -----------------------------
+# --------- DEMO PIPELINE ---------
 demo_pipeline = """
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -69,37 +37,38 @@ pipeline = Pipeline([
 ])
 """
 
-# -----------------------------
-# Input
-# -----------------------------
-if mode == "Custom Pipeline":
+# --------- SIDEBAR ---------
+st.sidebar.header("Controls")
 
-    user_code = st.text_area(
-        "Paste your ML pipeline code",
-        height=250
-    )
+mode = st.sidebar.radio(
+    "Choose Mode",
+    ["Demo Pipeline", "Custom Pipeline"]
+)
 
-else:
-
-    st.info("Demo pipeline loaded. Click analyze to run all agents.")
+# --------- INPUT ---------
+if mode == "Demo Pipeline":
+    st.info("Demo ML pipeline loaded")
 
     user_code = demo_pipeline
 
     st.code(user_code, language="python")
 
-# -----------------------------
-# Analyze Button
-# -----------------------------
-if st.button("🚀 Analyze Pipeline"):
+else:
+    user_code = st.text_area(
+        "Paste your ML pipeline code",
+        height=250
+    )
+
+# --------- ANALYZE BUTTON ---------
+if st.button("Analyze Pipeline 🚀"):
 
     if user_code.strip() == "":
-        st.warning("Please enter pipeline code.")
+        st.warning("Please enter pipeline code")
     else:
 
         with st.spinner("Running AI Agents..."):
 
             try:
-
                 payload = {"code": user_code}
 
                 response = requests.post(API_URL, json=payload)
@@ -108,63 +77,58 @@ if st.button("🚀 Analyze Pipeline"):
 
                     result = response.json()
 
-                    st.success("Pipeline Analysis Complete")
+                    st.success("Pipeline analysis complete")
 
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        st.subheader("🔍 Extractor Agent")
-                        st.json(result.get("extraction"))
+                        st.subheader("Extractor Agent")
+                        st.json(result.get("extraction", {}))
 
                     with col2:
-                        st.subheader("🧪 Validation Agent")
-                        st.json(result.get("validation"))
+                        st.subheader("Validation Agent")
+                        st.json(result.get("validation", {}))
 
                     with col3:
-                        st.subheader("🧠 Review Agent")
-                        st.json(result.get("review"))
+                        st.subheader("Review Agent")
+                        st.json(result.get("review", {}))
 
                     st.divider()
 
-                    st.subheader("🛡️ Final Gatekeeper Decision")
-
                     decision = result.get("decision", "Unknown")
 
+                    st.subheader("Final Gatekeeper Decision")
+
                     if decision == "approved":
-                        st.success("✅ Pipeline Approved")
+                        st.success("Pipeline Approved")
 
                     elif decision == "warning":
-                        st.warning("⚠️ Pipeline Needs Review")
+                        st.warning("Pipeline Needs Review")
 
                     else:
-                        st.error("❌ Pipeline Rejected")
+                        st.error("Pipeline Rejected")
 
                 else:
-                    st.error("API Error")
+                    st.error("API request failed")
 
             except Exception as e:
-
-                st.error("Connection failed")
+                st.error("Connection error")
                 st.write(e)
 
-# -----------------------------
-# Footer
-# -----------------------------
+# --------- FOOTER ---------
 st.divider()
 
 st.markdown(
 """
-### 🚀 About ML Gatekeeper
+### About ML Gatekeeper
 
-ML Gatekeeper is a **multi-agent AI system** that automatically audits machine learning pipelines.
+ML Gatekeeper is a **multi-agent AI system** designed to audit machine learning pipelines.
 
-Agents used:
+Agents:
 
-• Extractor Agent – understands pipeline structure  
-• Validation Agent – checks best practices  
-• Review Agent – performs AI safety analysis  
-
-Built for **secure and reliable AI deployment**.
+• Extractor Agent – Understands pipeline structure  
+• Validation Agent – Checks ML best practices  
+• Review Agent – Performs safety analysis  
 """
 )
 ```
