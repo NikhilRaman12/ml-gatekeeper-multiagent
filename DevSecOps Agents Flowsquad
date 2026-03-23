@@ -4,9 +4,9 @@ from PIL import Image
 
 BACKEND_URL = "https://orchestrator-agent-329609356017.asia-southeast1.run.app"
 
-st.set_page_config(page_title="🛡️ ML Gatekeeper Demo", layout="wide")
+st.set_page_config(page_title="DevSecops ML Gatekeeper Demo", layout="wide")
 
-st.title("🛡️ ML Gatekeeper - Multi-Agent Pipeline Validator")
+st.title("🛡️ Devsecops ML Gatekeeper Squad - Multi-Agent Pipeline Validator")
 st.write("Agents: Extractor → Validator → Reviewer → Decision")
 
 default_code = """from sklearn.pipeline import Pipeline
